@@ -1,0 +1,207 @@
+---
+import { Image, getImage, type ImageMetadata } from 'astro:assets';
+import BaseLayout from './Layout.astro';
+import { formatDate } from '../utils/formatDate';
+
+// Statinis importas numatyto hero paveikslo
+import defaultHeroImage from '../assets/images/default-post-hero.jpg';
+
+const allImageAssets = import.meta.glob<{ default: ImageMetadata }>('/src/assets/images/**/*.{jpeg,jpg,png,webp,gif,svg,avif}');
+
+async function resolveHeroImageSource(imagePath?: string | { src?: string }): Promise<ImageMetadata | string> {
+  if (!imagePath) {
+    console.log(`[HERO DEBUG] 'image' frontmatter property not found. Using default image.`);
+    return defaultHeroImage;
+  }
+
+  if (typeof imagePath !== 'string') {
+    if (typeof imagePath === 'object' && imagePath?.src && typeof imagePath.src === 'string') {
+      imagePath = imagePath.src;
+    } else {
+      console.warn(`[HERO DEBUG] Unexpected 'image' frontmatter format. Using default image.`);
+      return defaultHeroImage;
+    }
+  }
+
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    console.log(`[HERO DEBUG] Found external image URL: ${imagePath}`);
+    return imagePath;
+  }
+
+  const globPath = `/src${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+  console.log(`[HERO DEBUG] Searching for local image with glob path: "${globPath}"`);
+
+  if (allImageAssets[globPath]) {
+    console.log(`[HERO DEBUG] Match found! Importing module...`);
+    const { default: imageModule } = await allImageAssets[globPath]();
+    return imageModule;
+  } else {
+    console.error(`[HERO DEBUG] ERROR: Image not found for path: "${globPath}".`);
+    console.error(`[HERO DEBUG] Please check if the path in your frontmatter is correct and the file exists.`);
+    return defaultHeroImage;
+  }
+}
+
+interface Props {
+  title: string;
+  pubDate: Date;
+  description: string;
+  image?: string | { src?: string };
+  category?: string;
+  author?: string;
+  readingTime: string;
+  body: string;
+}
+
+const { title, pubDate, description, image, category, author, readingTime } = Astro.props;
+
+const heroSource = await resolveHeroImageSource(image);
+
+let finalHeroImageUrlForMeta: string;
+if (typeof heroSource === 'string') {
+  finalHeroImageUrlForMeta = heroSource;
+} else {
+  const optimizedImage = await getImage({
+    src: heroSource,
+    width: 1200,
+    format: 'webp',
+    quality: 80,
+  });
+  finalHeroImageUrlForMeta = new URL(optimizedImage.src, Astro.site).href;
+}
+
+const pageTitle = title || 'Untitled Article';
+const pageDescription = description || 'A comprehensive look into the topic.';
+const publishedDate = pubDate ? formatDate(pubDate) : 'Date not available';
+const postCategory = category || 'Uncategorized';
+const postAuthor = author || 'Gridors Team';
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+
+const breadcrumbs = [
+  { label: 'Guides', href: '/guides/diy-skills/' },
+  ...(category ? [{ label: category, href: `/guides/category/${category.toLowerCase().replace(/\s+/g, '-')}/` }] : []),
+  { label: pageTitle }
+];
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": pageTitle,
+  "author": { "@type": "Person", "name": postAuthor },
+  "datePublished": pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+  "image": finalHeroImageUrlForMeta,
+  "mainEntityOfPage": { "@type": "WebPage", "@id": canonicalURL.href }
+};
+
+const getShareUrl = (platform: string, url: URL, title: string): string => {
+  const encodedUrl = encodeURIComponent(url.href);
+  const encodedTitle = encodeURIComponent(title);
+  const encodedMedia = encodeURIComponent(finalHeroImageUrlForMeta);
+
+  switch (platform) {
+    case 'facebook': return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+    case 'twitter': return `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}&via=Gridors`;
+    case 'linkedin': return `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`;
+    case 'pinterest': return `https://pinterest.com/pin/create/button/?url=${encodedUrl}&description=${encodedTitle}&media=${encodedMedia}`;
+    case 'whatsapp': return `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`;
+    case 'telegram': return `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`;
+    default: return '#';
+  }
+};
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} image={finalHeroImageUrlForMeta}>
+  <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+
+  <article class="w-full" aria-labelledby="article-title">
+    <div class="relative mb-8 w-full overflow-hidden rounded-lg bg-gray-100 shadow-md aspect-video md:aspect-[16/6] lg:aspect-[16/5]">
+      {heroSource && (
+        <Image
+          src={heroSource}
+          alt={pageTitle}
+          width={1920}
+          height={1080}
+          loading="eager"
+          format="webp"
+          quality={80}
+          class="h-full w-full object-cover"
+        />
+      )}
+      <span class="absolute bottom-4 left-4 rounded-full bg-gridors-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white">
+        {postCategory}
+      </span>
+    </div>
+
+    <div class="mx-auto max-w-4xl rounded-xl bg-white px-4 py-8 shadow-lg sm:px-6 lg:px-8 md:py-12">
+      <nav aria-label="Breadcrumb" class="mb-6 text-sm text-gray-500">
+        <ol class="flex list-reset space-x-2">
+          {breadcrumbs.map((crumb, idx) => (
+            <li class:list={["flex items-center"]}>
+              {idx < breadcrumbs.length - 1 ? (
+                <a href={crumb.href} class="text-gridors-primary hover:underline">{crumb.label}</a>
+              ) : (
+                <span aria-current="page" class="font-medium text-gray-700">{crumb.label}</span>
+              )}
+              {idx < breadcrumbs.length - 1 && <span class="mx-2">/</span>}
+            </li>
+          ))}
+        </ol>
+      </nav>
+
+      <div class="mb-8 text-center text-sm text-gray-600">
+        <span>By <span class="font-semibold text-gray-800" rel="author">{postAuthor}</span></span>
+        <span class="mx-2">•</span>
+        <time datetime={pubDate ? new Date(pubDate).toISOString() : ''}>{publishedDate}</time>
+        <span class="mx-2">•</span>
+        <span>{readingTime}</span>
+      </div>
+
+      <div class="article-content" id="article-content">
+        <slot />
+      </div>
+
+      <div class="mt-12 border-t border-gray-200 pt-6 text-center">
+        <h5 class="mb-4 text-lg font-semibold text-gray-800">Share This Article</h5>
+        <div class="flex justify-center space-x-4">
+          <a href={getShareUrl('facebook', canonicalURL, pageTitle)} target="_blank" rel="noopener noreferrer" class="text-gray-600 transition-colors hover:text-blue-600"><i class="fab fa-facebook-f text-2xl"></i></a>
+          <a href={getShareUrl('twitter', canonicalURL, pageTitle)} target="_blank" rel="noopener noreferrer" class="text-gray-600 transition-colors hover:text-blue-400"><i class="fab fa-twitter text-2xl"></i></a>
+          <a href={getShareUrl('linkedin', canonicalURL, pageTitle)} target="_blank" rel="noopener noreferrer" class="text-gray-600 transition-colors hover:text-blue-700"><i class="fab fa-linkedin-in text-2xl"></i></a>
+          <a href={getShareUrl('whatsapp', canonicalURL, pageTitle)} target="_blank" rel="noopener noreferrer" class="text-gray-600 transition-colors hover:text-green-500"><i class="fab fa-whatsapp text-2xl"></i></a>
+          <a href={getShareUrl('telegram', canonicalURL, pageTitle)} target="_blank" rel="noopener noreferrer" class="text-gray-600 transition-colors hover:text-blue-500"><i class="fab fa-telegram-plane text-2xl"></i></a>
+          <a href={getShareUrl('pinterest', canonicalURL, pageTitle)} target="_blank" rel="noopener noreferrer" class="text-gray-600 transition-colors hover:text-red-600"><i class="fab fa-pinterest-p text-2xl"></i></a>
+        </div>
+      </div>
+
+      <footer class="mt-12 flex items-center justify-between border-t border-gray-200 pt-8 text-sm text-gray-600">
+        <div class="flex items-center space-x-2">
+          <span>Category:</span>
+          <a href={`/guides/category/${postCategory.toLowerCase().replace(/\s/g, '-')}/`} rel="tag" class="font-medium text-gridors-primary hover:underline">
+            {postCategory}
+          </a>
+        </div>
+        <div>
+          <span>Published: {publishedDate}</span>
+        </div>
+      </footer>
+    </div>
+  </article>
+</BaseLayout>
+
+<style is:global>
+  .article-content { font-size: 1.125rem; line-height: 1.75; color: #374151; }
+  .article-content p { margin-bottom: 1.5em; }
+  .article-content h1, .article-content h5, .article-content h6 { display: none !important; }
+  .article-content h2, .article-content h3, .article-content h4 { font-family: var(--font-heading); font-weight: 700; margin-top: 2em; margin-bottom: 0.8em; color: #1f2937; line-height: 1.2; }
+  .article-content h2 { font-size: 2.25rem; }
+  .article-content h3 { font-size: 1.875rem; }
+  .article-content h4 { font-size: 1.5rem; }
+  .article-content ul, .article-content ol { margin-left: 1.5em; margin-bottom: 1.5em; padding-left: 0.5em; }
+  .article-content ul li { list-style-type: disc; margin-bottom: 0.5em; }
+  .article-content ol li { list-style-type: decimal; margin-bottom: 0.5em; }
+  .article-content a { color: var(--color-primary); text-decoration: underline; font-weight: 500; }
+  .article-content a:hover { color: var(--color-accent); }
+  .article-content strong { font-weight: 700; color: #1f2937; }
+  .article-content pre { border-radius: 0.75rem; padding: 1.5rem; margin: 2rem 0; background: #1e293b; color: #f8fafc; overflow-x: auto; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+  .article-content code { font-family: var(--font-mono); }
+  .article-content blockquote { border-left: 4px solid var(--color-primary-light); padding-left: 1.5em; margin: 2em 0; font-style: italic; color: #4b5563; }
+</style>

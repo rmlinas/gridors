@@ -1,0 +1,131 @@
+---
+// src/pages/blog/index.astro - Premium Magazine Stilius (be dubliuoto Sidebar)
+import { getCollection } from 'astro:content';
+import Layout from '@/layouts/Layout.astro';
+import BlogCard from '@/components/BlogCard.astro';
+
+// Gauname pagrindinį blogo aprašo puslapį (pvz., 'blog-md.md')
+const blogIndexPage = await getCollection('blog', ({ id }) => id === 'blog-md').then(data => data[0]);
+
+// Gauname visus blogo įrašus, išskyrus pagrindinį blogo aprašo puslapį
+const allPosts = await getCollection('blog', ({ id }) => id !== 'blog-md');
+
+// Rūšiuojame įrašus pagal datą naujausi pirmiausia
+const sortedPosts = allPosts
+  .filter(p => !p.data.draft) // Filtruojame juodraščius
+  .sort((a, b) => new Date(b.data.pubDate ?? 0).getTime() - new Date(a.data.pubDate ?? 0).getTime());
+
+// Pirmas įrašas bus "Featured" įrašas
+const featuredPost = sortedPosts[0];
+const regularPosts = sortedPosts.slice(1); // Likę įrašai
+
+const PAGE_SIZE = 6;
+const page = Number(Astro.url.searchParams.get('page') || 1);
+const totalPages = Math.ceil(regularPosts.length / PAGE_SIZE);
+const paginatedPosts = regularPosts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+// Puslapio meta duomenys iš blogIndexPage
+const pageTitle = blogIndexPage?.data.title || "Gridors Blog";
+const pageDescription = blogIndexPage?.data.description || "Explore the Gridors blog for practical stories and expert insights.";
+const pageImage = blogIndexPage?.data.image || '/social-preview.png';
+
+// NAUJAS: Nustatome contentGridClass. Šis puslapis yra blogo sąrašas su Featured post.
+const blogContentGridClass = "lg:col-span-8"; // Grąžiname 8 stulpelius pagrindiniam turiniui
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  image={pageImage}
+  showSidebar={true}
+  contentGridClass={blogContentGridClass} {/* NAUJAS: Perduodame contentGridClass */}
+>
+  <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* Pagrindinė turinio sritis. Dabar jos plotį valdo Layout per contentGridClass */}
+      <section class="col-span-full w-full animate-fade-in"> 
+        {/* Pagrindinė blogo puslapio antraštė ir aprašymas */}
+        <header class="text-center mb-10 bg-white rounded-xl shadow-lg p-8 md:p-12">
+          <h1 class="text-5xl font-extrabold text-gray-900 leading-tight mb-4 font-oswald">
+            {blogIndexPage?.data.title}
+          </h1>
+          <p class="text-xl text-gray-700 mx-auto max-w-2xl">
+            {blogIndexPage?.data.description}
+          </p>
+          {blogIndexPage?.body && (
+            <div class="article-content mt-6 text-left">
+              <Fragment set:html={blogIndexPage.body} />
+            </div>
+          )}
+        </header>
+
+        {/* FEATURED POST (Išskirtinis įrašas) */}
+        {featuredPost && (
+          <div class="mb-10 bg-white rounded-xl shadow-lg overflow-hidden animate-fade-in">
+            <a href={`/blog/${featuredPost.slug}/`} class="block group">
+              <div class="relative w-full aspect-video md:aspect-[16/6] lg:aspect-[16/5] overflow-hidden bg-gray-100">
+                <img
+                  src={featuredPost.data.image || '/default-post-hero.jpg'}
+                  alt={featuredPost.data.title}
+                  width="1920"
+                  height="1080"
+                  loading="eager"
+                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                {featuredPost.data.category && (
+                  <span class="absolute bottom-4 left-4 bg-gridors-primary text-white text-xs px-3 py-1.5 rounded-full uppercase font-bold tracking-wider">
+                    {featuredPost.data.category}
+                  </span>
+                )}
+              </div>
+              <div class="p-8">
+                <h2 class="text-3xl font-bold text-gray-900 leading-tight mb-4 group-hover:text-gridors-primary transition-colors font-oswald">
+                  {featuredPost.data.title}
+                </h2>
+                <p class="text-lg text-gray-700 mb-4">{featuredPost.data.description}</p>
+                <p class="text-sm text-gray-600">
+                  By <span class="font-semibold">{featuredPost.data.author || 'Gridors Team'}</span> on {new Date(featuredPost.data.pubDate ?? 0).toLocaleDateString()} · {featuredPost.data.readingTime || 'N/A'} min read
+                </p>
+                <span class="mt-4 inline-block text-gridors-primary hover:underline font-medium">
+                  Read More →
+                </span>
+              </div>
+            </a>
+          </div>
+        )}
+
+        {/* Reguliarūs blogo įrašai tinklelyje */}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {paginatedPosts.map(post => (
+            <BlogCard post={post} />
+          ))}
+        </div>
+
+        {/* Puslapiavimas */}
+        {totalPages > 1 && (
+          <div class="flex justify-center mt-12 space-x-4">
+            {page > 1 && (
+              <a href={`/blog/?page=${page - 1}`} class="btn btn-secondary">Previous</a>
+            )}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+              <a
+                key={pageNum}
+                href={`/blog/?page=${pageNum}`}
+                class={`px-4 py-2 rounded font-medium ${pageNum === page ? 'bg-gridors-primary text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}
+              >
+                {pageNum}
+              </a>
+            ))}
+            {page < totalPages && (
+              <a href={`/blog/?page=${page + 1}`} class="btn btn-secondary">Next</a>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* Šoninė juosta yra atvaizduojama per Layout.astro, todėl jos čia nereikia */}
+      {/* Nėra <aside> bloko, nes jį valdo Layout.astro */}
+
+    </div>
+  </main>
+</Layout>

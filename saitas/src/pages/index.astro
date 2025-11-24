@@ -1,0 +1,169 @@
+---
+// src/pages/index.astro
+import { getCollection } from 'astro:content';
+import Layout from '@/layouts/Layout.astro';
+import HeroPostCard from '@/components/HeroPostCard.astro';
+import BlogCard from '@/components/BlogCard.astro';
+import CategoryBlock from '@/components/CategoryBlock.astro';
+import LatestEntries from '@/components/LatestEntries.astro';
+import FeaturedGuides from '@/components/FeaturedGuides.astro';
+import Logo from '@/components/Logo.astro';
+
+// --- Duomenų gavimas ---
+
+// Fetch all collections
+const allGuides = await getCollection('guides', ({ data }) => !data.draft);
+const allBlogPosts = await getCollection('blog', ({ data }) => !data.draft);
+const allReviews = await getCollection('reviews', ({ data }) => !data.draft);
+
+// 1. Featured / Highlighted Content (from all collections)
+const combinedLatest = [
+  ...allGuides.sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()).slice(0, 2),
+  ...allBlogPosts.sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()).slice(0, 2),
+  ...allReviews.sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()).slice(0, 2),
+];
+
+// Shuffle and take top 6 combined
+const featuredContent = combinedLatest
+  .sort(() => Math.random() - 0.5)
+  .slice(0, 6);
+
+// 2. Naujausi blogo įrašai
+const latestBlogPosts = allBlogPosts
+  .sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime())
+  .slice(0, 3);
+
+// 3. Naujausios apžvalgos
+const latestReviews = allReviews
+  .sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime())
+  .slice(0, 3);
+
+// 4. Featured GUIDES (pašalinta sekcija, tad šios konstantos nebereikia)
+// const featuredGuideSlugs = [
+//   'garden-guides/mastering-natural-pest-control-sustainable-homestead-gardening',
+// ];
+// const selectedFeaturedGuides = allGuides.filter(guide => featuredGuideSlugs.includes(guide.slug));
+
+
+// 5. Kategorijos ir jų gidų skaičiai (nors "Browse Categories" sekcija pašalinta, logika gali būti naudinga sidebar'ui)
+const allCategories = [...allGuides, ...allBlogPosts, ...allReviews].reduce((acc, item) => {
+  const categoryName = item.data.category || 'Uncategorized';
+  const categorySlug = categoryName.toLowerCase().replace(/\s/g, '-');
+  if (!acc[categorySlug]) {
+    acc[categorySlug] = {
+      name: categoryName,
+      slug: categorySlug,
+      count: 0
+    };
+  }
+  acc[categorySlug].count++;
+  return acc;
+}, {} as Record<string, { name: string; slug: string; count: number; }>);
+
+const sortedCategories = Object.values(allCategories).sort((a, b) => a.name.localeCompare(b.name));
+
+// --- Page Metadata ---
+const pageTitle = "Gridors: Master Self-Reliance & Resilience";
+const pageDescription = "Empower yourself with comprehensive guides on modern homesteading, off-grid living, sustainable gardening, and vital self-sufficiency skills.";
+const pageImage = "/social-preview.png";
+---
+
+<Layout title={pageTitle} description={pageDescription} image={pageImage} showSidebar={true} contentGridClass="lg:col-span-8">
+  {/* Hero Sekcija */}
+  <section class="relative bg-gradient-to-br from-gray-900 to-gray-700 text-white py-24 px-4 sm:px-6 lg:px-8 text-center overflow-hidden">
+    <div class="absolute inset-0 bg-cover bg-center opacity-20" style="background-image: url('/images/hero-bg-pattern.svg');"></div>
+    <div class="relative z-10 max-w-4xl mx-auto">
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6 font-oswald tracking-tight">
+        Master Self-Reliance. Build Your Resilient Future.
+      </h1>
+      <p class="text-lg sm:text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+        Your comprehensive guide to modern homesteading, off-grid living, sustainable gardening, and vital self-sufficiency skills.
+      </p>
+      <a href="/guides/" class="btn inline-block text-lg px-8 py-4 bg-gridors-primary hover:bg-gridors-primary-light transition-colors duration-300 rounded-full font-bold shadow-lg">
+        Explore All Guides →
+      </a>
+    </div>
+  </section>
+
+  {/* Featured Content / Highlighted Articles (from all collections) */}
+  {featuredContent.length > 0 && (
+    <section class="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+      <div class="max-w-7xl mx-auto pb-12">
+        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-12 text-center section-title">
+          Featured Content: Deep Dives & Essential Insights
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {featuredContent.map(item => (
+            <BlogCard post={item} key={`${item.collection}-${item.slug}`} />
+          ))}
+        </div>
+        <div class="text-center mt-12">
+          <a href="/guides/" class="btn btn-secondary inline-block px-6 py-3">View All Guides & Articles</a>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {/* Originalūs Išskirtiniai/Pamatiniiai gidai - ŠI SEKCIJA PAŠALINTA */}
+  {/*
+  {selectedFeaturedGuides.length > 0 && (
+    <section class="py-16 px-4 sm:px-6 lg:px-8 bg-white border-t border-gray-100">
+      <div class="max-w-7xl mx-auto pt-12 pb-12">
+        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-12 text-center section-title">
+          Essential Guides: Master Fundamental Skills
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {selectedFeaturedGuides.map(guide => (
+            <BlogCard post={guide} key={guide.slug} />
+          ))}
+        </div>
+        <div class="text-center mt-12">
+          <a href="/guides/" class="btn btn-secondary inline-block px-6 py-3">View All Guides</a>
+        </div>
+      </div>
+    </section>
+  )}
+  */}
+
+  {/* Naujausi Blogo įrašai */}
+  {latestBlogPosts.length > 0 && (
+    <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <div class="max-w-7xl mx-auto pb-12">
+        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-12 text-center section-title">
+          Latest Insights from Our Blog
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {latestBlogPosts.map(post => (
+            <BlogCard post={post} key={post.slug} />
+          ))}
+        </div>
+        <div class="text-center mt-12">
+          <a href="/blog/" class="btn btn-secondary inline-block px-6 py-3">Read All Blog Posts</a>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {/* Naujausios Apžvalgos */}
+  {latestReviews.length > 0 && (
+    <section class="py-16 px-4 sm:px-6 lg:px-8 bg-white border-t border-gray-100">
+      <div class="max-w-7xl mx-auto pt-12 pb-12">
+        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-12 text-center section-title">
+          Recent Reviews: Tested & Approved Gear
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {latestReviews.map(review => (
+            <BlogCard post={review} key={review.slug} />
+          ))}
+        </div>
+        <div class="text-center mt-12">
+          <a href="/reviews/" class="btn btn-secondary inline-block px-6 py-3">See All Reviews</a>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {/* Naršykite mūsų kategorijas - PAŠALINTA */}
+  {/* Šios sekcijos kodas jau buvo pašalintas ankstesniame atnaujinime. */}
+
+</Layout>

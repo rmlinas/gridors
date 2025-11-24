@@ -1,0 +1,155 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '@/layouts/Layout.astro';
+import path from 'node:path';
+import fs from 'node:fs';
+import { format } from 'date-fns';
+
+const guidesIndexPage = await getCollection('guides', ({ slug }) => slug === 'guides').then(data => data[0]);
+
+// NAUJAS: Iškviečiame .render() metodą, kad gautume HTML turinį
+let GuidesIndexContent: any = null; // Naudojame 'any', kad išvengtume tipo klaidų su Astro komponentais
+if (guidesIndexPage) {
+  const { Content } = await guidesIndexPage.render();
+  GuidesIndexContent = Content;
+}
+
+const allGuides = await getCollection('guides', ({ slug }) => slug !== 'guides');
+console.log('DEBUG: All fetched guide slugs:', allGuides.map(g => g.slug));
+
+const guidesContentDir = path.join(process.cwd(), 'src', 'content', 'guides');
+
+let guideCategoryDirectories: string[] = [];
+if (fs.existsSync(guidesContentDir)) {
+  guideCategoryDirectories = fs.readdirSync(guidesContentDir, { withFileTypes: true })
+                                   .filter(dirent => dirent.isDirectory())
+                                   .map(dirent => dirent.name);
+}
+
+const dynamicGuidesCategoriesMap = new Map<string, { count: number; href: string; icon: string; originalTitle: string }>();
+
+const categoryIconsBySlug = {
+  "animals-guides": "🐾",
+  "diy-skills": "🔧",
+  "garden-guides": "🌱",
+  "kitchen": "🍳",
+  "natural-recipes": "🌿",
+  "off-grid-living": "⚡",
+  "default": "📖"
+};
+
+guideCategoryDirectories.forEach(dirName => {
+  const originalTitle = dirName.replace(/-/g, ' ')
+                               .split(' ')
+                               .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                               .join(' ');
+
+  const categorySlug = dirName;
+  const categoryHref = `/guides/${categorySlug}/`;
+  const icon = categoryIconsBySlug[dirName as keyof typeof categoryIconsBySlug] || categoryIconsBySlug["default"];
+
+  const count = allGuides.filter(guide => 
+    guide.slug === dirName || 
+    guide.slug.startsWith(`${dirName}/`)
+  ).length;
+
+  console.log(`DEBUG: Category "${dirName}" has ${count} guides.`); 
+
+  if (count > 0) {
+    dynamicGuidesCategoriesMap.set(originalTitle, {
+      count: count,
+      href: categoryHref,
+      icon: icon,
+      originalTitle: originalTitle
+    });
+  }
+});
+
+console.log('DEBUG: dynamicGuidesCategoriesMap content:', Array.from(dynamicGuidesCategoriesMap.entries()));
+
+const guideCategories = Array.from(dynamicGuidesCategoriesMap.values()).sort((a, b) => a.originalTitle.localeCompare(b.originalTitle));
+
+const PAGE_SIZE = 15;
+const page = Number(Astro.url.searchParams.get('page') || 1);
+const totalPages = Math.ceil(guideCategories.length / PAGE_SIZE);
+const paginatedCategories = guideCategories.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+const pageTitle = guidesIndexPage?.data.title || "Gridors Guides";
+const pageDescription = guidesIndexPage?.data.description || "Explore our library of comprehensive guides.";
+const pageImage = guidesIndexPage?.data.image || '/social-preview.png';
+
+const guidesContentGridClass = "lg:col-span-8"; 
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  image={pageImage}
+  showSidebar={true}
+  contentGridClass={guidesContentGridClass}
+>
+  <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <section class="col-span-full w-full animate-fade-in"> 
+        <header class="text-center mb-10 bg-white rounded-xl shadow-lg p-8 md:p-12 mx-auto max-w-4xl"> 
+          <h1 class="text-5xl font-extrabold text-gray-900 leading-tight mb-4 font-oswald">
+            {guidesIndexPage?.data.title}
+          </h1>
+          <p class="text-xl text-gray-700 mx-auto max-w-2xl">
+            {guidesIndexPage?.data.description}
+          </p>
+          {guidesIndexPage?.body && (
+            <div class="article-content mt-6 text-left">
+              {/* PAKEISTA: Naudojame komponentą GuidesIndexContent Markdown atvaizdavimui */}
+              <GuidesIndexContent /> 
+            </div>
+          )}
+        </header>
+
+        <div class="py-16 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8"> 
+          <h2 class="text-3xl font-bold text-center mb-10">Explore Our Guide Categories</h2>
+          
+          {paginatedCategories.length > 0 ? (
+            <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> 
+              {paginatedCategories.map(category => (
+                <li class="bg-white rounded-xl shadow-lg overflow-hidden transition-transform transform hover:scale-105 duration-300 ease-in-out">
+                  <a href={category.href} 
+                     class={`block p-6 text-center group-hover:text-gridors-primary transition-colors`} 
+                  > 
+                    <span class="text-6xl mb-4 block" set:html={category.icon}></span>
+                    <h3 class="text-xl font-bold text-gray-900 hover:text-gridors-primary transition-colors mb-2">
+                      {category.originalTitle}
+                    </h3>
+                    <p class="text-gray-600 text-sm">{category.count} Guides</p>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="text-center text-lg text-gray-700 col-span-full mt-10">No guide categories found yet. The library is growing, check back soon.</p> 
+          )}
+
+          {totalPages > 1 && (
+            <div class="mt-12 flex justify-center space-x-4"> 
+              {page > 1 && (
+                <a href={`/guides/?page=${page - 1}`} class="btn btn-secondary">Previous</a>
+              )}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                <a
+                  key={pageNum}
+                  href={`/guides/?page=${pageNum}`}
+                  class={`px-4 py-2 rounded font-medium ${pageNum === page ? 'bg-gridors-primary text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}
+                >
+                  {pageNum}
+                </a>
+              ))}
+              {page < totalPages && (
+                <a href={`/guides/?page=${page + 1}`} class="btn btn-secondary">Next</a>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  </main>
+</Layout>

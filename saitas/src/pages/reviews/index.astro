@@ -1,0 +1,82 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/Layout.astro';
+import StarRatingInput from '../../components/StarRatingInput.jsx';
+
+const posts = (await getCollection('reviews', ({ data }) => !data.draft))
+  .sort((a, b) => {
+    const dateA = new Date(a.data.pubDate || 0).valueOf();
+    const dateB = new Date(b.data.pubDate || 0).valueOf();
+    return dateB - dateA;
+  });
+---
+
+<BaseLayout title="Product Reviews">
+  <main class="container mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold text-gray-900 mb-8 text-center rounded-lg p-4 bg-gray-100 shadow-md">
+      Our Product Reviews
+    </h1>
+
+    {posts.length > 0 ? (
+      <section aria-label="Review Listings">
+        <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {posts.map(post => (
+            <li class="bg-white rounded-lg shadow-lg overflow-hidden transition-transform transform hover:scale-105 duration-300 ease-in-out">
+              <a href={`/reviews/${post.slug}`} class="block p-6" rel="bookmark">
+                {post.data.image && (
+                  <img
+                    src={post.data.image}
+                    alt={post.data.title || 'Review image'}
+                    class="w-full h-48 object-cover rounded-lg mb-4"
+                  />
+                )}
+
+                <h2 class="text-2xl font-semibold text-gridors-primary mb-2 hover:text-gridors-primary-darker transition-colors duration-200">
+                  {post.data.title}
+                </h2>
+
+                {post.data.product && (
+                  <p class="text-gray-600 text-sm mb-2">
+                    <strong>Product:</strong> {post.data.product}
+                  </p>
+                )}
+
+                {post.data.rating && (
+                  <div class="flex items-center mb-4">
+                    <StarRatingInput initialRating={post.data.rating} readOnly={true} client:load />
+                    <span class="text-gray-700 font-medium ml-2">({post.data.rating} / 5)</span>
+                  </div>
+                )}
+
+                {post.data.description && (
+                  <p class="text-gray-700 text-base mb-4">
+                    {post.data.description}
+                  </p>
+                )}
+
+                <div class="text-gray-500 text-sm">
+                  {post.data.pubDate && (
+                    <p>
+                      Published: {new Date(post.data.pubDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  )}
+                  {post.data.author && (
+                    <p class="mt-1">
+                      Author: {post.data.author}
+                    </p>
+                  )}
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : (
+      <p class="text-center text-gray-600 text-xl mt-12">No reviews available at the moment. Please check back soon!</p>
+    )}
+  </main>
+</BaseLayout>

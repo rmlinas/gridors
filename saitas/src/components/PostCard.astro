@@ -1,0 +1,41 @@
+---
+import { format } from 'date-fns';
+const { post } = Astro.props;
+---
+<article class="bg-white rounded-xl shadow-lg overflow-hidden transition-transform hover:shadow-xl duration-300">
+  {post.data.image && (
+    <a href={`/${post.collection}/${post.slug}`} class="block overflow-hidden">
+      <img
+        src={post.data.image}
+        alt={post.data.title}
+        class="w-full h-48 object-cover transform hover:scale-105 transition-transform duration-300"
+      />
+    </a>
+  )}
+  <div class="p-6">
+    <h3 class="text-xl font-semibold text-gray-900 mb-2">
+      <a href={`/${post.collection}/${post.slug}`} class="hover:text-gridors-primary">
+        {post.data.title}
+      </a>
+    </h3>
+    {post.data.pubDate && (
+      <time
+        datetime={post.data.pubDate}
+        class="block text-sm text-gray-500 mb-4"
+      >
+        {format(new Date(post.data.pubDate), 'MMMM d, yyyy')}
+      </time>
+    )}
+    {post.data.description && (
+      <p class="text-gray-700 mb-4 line-clamp-3">
+        {post.data.description}
+      </p>
+    )}
+    <a
+      href={`/${post.collection}/${post.slug}`}
+      class="inline-block text-gridors-primary font-medium hover:underline"
+    >
+      Read more →
+    </a>
+  </div>
+</article>

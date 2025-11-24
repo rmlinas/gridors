@@ -1,0 +1,76 @@
+---
+import { format } from 'date-fns';
+
+const { post } = Astro.props;
+const prefix = post.collection;
+
+const title = post.data.title || 'Untitled Post';
+const pubDateRaw = post.data.pubDate;
+const pubDate = pubDateRaw ? format(new Date(pubDateRaw), 'MMMM d, yyyy') : '';
+
+const category = post.data.category;
+const image = post.data.image;
+const description = post.data.description;
+const body = post.body || '';
+const rating = post.data.rating;
+
+// Reading time (guides/blog only)
+const readingTime = !rating && body
+  ? `${Math.ceil(body.trim().split(/\s+/).length / 200)} min read`
+  : null;
+
+// Strip Markdown helper
+function stripMarkdown(markdown: string): string {
+  return markdown
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+    .replace(/`(.*?)`/g, '$1')
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    .replace(/>\s+/g, '')
+    .replace(/-{3,}/g, '')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
+}
+
+const excerpt = description || stripMarkdown(body).split(' ').slice(0, 30).join(' ') + '...';
+---
+
+<a href={`/${prefix}/${post.slug}`} class="block group" aria-label={`Read more: ${title}`}>
+  <article class="bg-white shadow p-6 rounded-xl transition group-hover:shadow-md" aria-labelledby={`post-title-${post.slug}`}>
+    
+    {image && (
+      <img
+        src={image}
+        alt={title}
+        class="w-full h-40 object-cover rounded-md mb-4"
+        loading="lazy"
+      />
+    )}
+
+    {category && (
+      <span class="inline-block bg-gridors-primary-light text-white text-xs font-medium px-2 py-0.5 rounded mb-2">
+        {category}
+      </span>
+    )}
+
+    <h2 id={`post-title-${post.slug}`} class="text-xl font-semibold text-gridors-dark mb-1 group-hover:underline">
+      {title}
+    </h2>
+
+    <p class="text-sm text-gray-500 mb-3">
+      <time datetime={pubDateRaw}>{pubDate}</time>
+      {readingTime && (
+        <span class="ml-2 text-gray-400">• {readingTime}</span>
+      )}
+      {rating && (
+        <span class="ml-2 text-yellow-600 font-medium">• {rating} ★</span>
+      )}
+    </p>
+
+    <p class="text-gray-700 text-sm line-clamp-3">{excerpt}</p>
+
+    <span class="mt-4 inline-block text-[var(--color-primary)] hover:underline">Read more →</span>
+  </article>
+</a>

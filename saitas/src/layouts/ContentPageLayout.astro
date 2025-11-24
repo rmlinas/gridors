@@ -1,0 +1,298 @@
+---
+// src/layouts/ContentPageLayout.astro - Layout for general content pages (e.g., About, Contact, Start Here)
+import Layout from '@/layouts/Layout.astro';
+import { format } from 'date-fns';
+import CategoryBlock from '@/components/CategoryBlock.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  pubDate?: string;
+  author?: string;
+  image?: string;
+  showSidebar?: boolean | string;
+  
+  // NAUJI PROPSAI, SKIRTI UNIKALIEMS PUSLAPIAMS KAIP "START HERE" IR Dabar SKAIČIUOKLEI
+  hero_title?: string;
+  hero_subtitle?: string;
+  cards?: { icon: string; link: string; title: string; text: string; }[];
+  resources_title?: string;
+  fullContentWidth?: boolean; // NAUJAS PROP - jei true, panaikina max-w-4xl
+}
+
+const {
+  title: pageTitle,
+  description: pageDescription,
+  pubDate,
+  author: postAuthor = 'Gridors Team',
+  image: heroImage,
+  showSidebar: rawShowSidebar = true,
+  
+  hero_title,
+  hero_subtitle,
+  cards,
+  resources_title,
+  fullContentWidth = false // Numatytoji reikšmė false (apribotas plotis)
+} = Astro.props;
+
+// AIŠKUS KONVERTAVIMAS Į LOGINĘ REIKŠMĘ (boolean)
+const finalShowSidebar = typeof rawShowSidebar === 'string' 
+  ? (rawShowSidebar.toLowerCase() === 'true') 
+  : Boolean(rawShowSidebar); 
+
+const formattedPubDate = pubDate ? format(new Date(pubDate), 'MMMM d,PPPP') : null;
+
+const contentGridClass = finalShowSidebar ? 'lg:col-span-8' : 'lg:col-span-12';
+
+// Pasirenkame pagrindinio turinio bloko plotį
+const mainContentWidthClass = fullContentWidth ? 'max-w-full' : 'max-w-4xl mx-auto';
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  image={heroImage}
+  showSidebar={finalShowSidebar}
+  contentGridClass={contentGridClass}
+>
+  {/* Hero Image (bendras) - atvaizduojame, jei yra IR NĖRA SPECIFINIO hero_title */}
+  {heroImage && !hero_title && (
+    <div class="relative w-full aspect-video md:aspect-[16/6] lg:aspect-[16/5] overflow-hidden bg-gray-100 mb-8 rounded-lg shadow-md animate-fade-in">
+      <img
+        src={heroImage}
+        alt={pageTitle}
+        width="1920"
+        height="1080"
+        loading="eager"
+        class="w-full h-full object-cover"
+      />
+    </div>
+  )}
+
+  {/* Hero Sekcija (SPECIFINĖ, pvz., START HERE) */}
+  {hero_title && (
+    <section class="relative bg-gradient-to-br from-gray-900 to-gray-700 text-white py-24 px-4 sm:px-6 lg:px-8 text-center overflow-hidden rounded-lg shadow-lg mb-8">
+      <div class="absolute inset-0 bg-cover bg-center opacity-20" style="background-image: url('/images/hero-bg-pattern.svg');"></div>
+      <div class="relative z-10 max-w-4xl mx-auto">
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6 font-oswald tracking-tight">
+          {hero_title}
+        </h1>
+        {hero_subtitle && (
+          <p class="text-lg sm:text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+            {hero_subtitle}
+          </p>
+        )}
+        <a href="/guides/" class="btn inline-block text-lg px-8 py-4 bg-gridors-primary hover:bg-gridors-primary-light transition-colors duration-300 rounded-full font-bold shadow-lg">
+          Explore All Guides →
+        </a>
+      </div>
+    </section>
+  )}
+
+  {/* Pagrindinis turinio blokas su balta apdaila */}
+  <div class:list={[mainContentWidthClass, "px-4 sm:px-6 lg:px-8 py-8 md:py-12 bg-white rounded-xl shadow-lg"]}> {/* KLASĖS NAUDOJA mainContentWidthClass */}
+    
+    {/* Antraštė ir metaduomenys (NE rodoma, jei NĖRA SPECIFINIO hero_title) */}
+    {!hero_title && (
+      <header class="mb-10 text-center">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4 font-oswald" id="article-title">
+          {pageTitle}
+        </h1>
+        {formattedPubDate && (
+          <p class="text-md text-gray-600">
+            By <span class="font-semibold text-gray-800">{postAuthor}</span> on <time dateTime={pubDate}>{formattedPubDate}</time>
+          </p>
+        )}
+      </header>
+    )}
+
+    {/* NAUJA: Kortelių sekcija iš cards propso */}
+    {cards && cards.length > 0 && (
+      <div class="mb-12">
+        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-8 text-center section-title">
+          Your Key Pathways to Self-Reliance
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {cards.map(card => (
+            <CategoryBlock
+              title={card.title}
+              href={card.link}
+              icon={card.icon}
+              text={card.text}
+              key={card.link}
+            />
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* Papildomos nuorodos (pvz., Start Here sub-puslapiams) - gali būti bendrinamos su Resources */}
+    {(pageTitle === 'Start Your Modern Homesteading Journey' || resources_title) && (
+      <div class="mb-12 pt-8 border-t border-gray-200 text-center">
+        <h3 class="text-2xl font-bold text-gray-900 mb-6 font-oswald">
+          {pageTitle === 'Start Your Modern Homesteading Journey' ? 'Deepen Your Knowledge' : resources_title}
+        </h3>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+          {pageTitle === 'Start Your Modern Homesteading Journey' ? (
+            <>
+              <a href="/start-here/why-homesteading/" class="btn btn-secondary px-6 py-3">Why Homesteading? →</a>
+              <a href="/start-here/quick-start/" class="btn btn-secondary px-6 py-3">Quick Start Guide →</a>
+            </>
+          ) : (
+            <>
+              {/* Jei norite bendrinti su kitais puslapiais, pridėkite nuorodas čia. */}
+              {/* Pavyzdys: <a href="/reviews/" class="btn btn-secondary px-6 py-3">Product Reviews</a> */}
+              {/* <a href="/resources/checklists/" class="btn btn-secondary px-6 py-3">Free Checklists</a> */}
+            </>
+          )}
+        </div>
+      </div>
+    )}
+
+
+    {/* Pagrindinis turinys iš Markdown failo */}
+    <div class="article-content" id="main-mdx-content">
+      <slot /> {/* Štai kur bus įterptas pagrindinis MDX failo turinys */}
+    </div>
+
+    {/* Poraštė (pasirenkama, galima perkelti į Layout.astro, jei norite, kad būtų bendra) */}
+    <footer class="mt-12 pt-8 border-t border-gray-200 text-gray-600 text-sm">
+      <p>&copy; {new Date().getFullYear()} Gridors. All rights reserved.</p>
+    </footer>
+  </div>
+</Layout>
+
+<style is:global>
+  /* Šis stiliaus blokas skirtas Markdown sugeneruoto HTML stilizavimui,
+     kad jis atrodytų kaip žurnalo/naujienų straipsnis.
+     Tai pakeis "prose" efektyvumą, nes nebeturime prose klasės. */
+  .article-content {
+    /* Pagrindinio teksto stiliai */
+    font-size: 1.125rem; /* text-lg */
+    line-height: 1.75;  /* leading-relaxed */
+    color: #374151; /* text-gray-700 */
+  }
+
+  .article-content p { margin-bottom: 1.5em; }
+
+  /* NAUJI STILIAI, SKIRTI QUICK START ŽINGSNIAMS IR DUK */
+  .article-content ol { /* Bendras sąrašo stilius */
+    list-style: none; /* Pašaliname numatytąjį numeravimą, jei norite custom */
+    padding-left: 0;
+    margin-left: 0;
+  }
+  .article-content ol li { /* Kiekvieno žingsnio kortelė */
+    background-color: var(--color-light); /* bg-gray-50 */
+    padding: 1.5rem; /* p-6 */
+    border-radius: 0.5rem; /* rounded-lg */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+    margin-bottom: 1.5rem; /* Tarpas tarp žingsnių */
+    border: 1px solid var(--color-muted); /* Subtili kraštinė */
+  }
+  .article-content ol li h2 { /* Žingsnio numeris/antraštė */
+    font-size: 1.5rem; /* text-2xl */
+    font-weight: 700; /* font-bold */
+    color: var(--color-primary); /* Spalva */
+    margin-top: 0 !important; /* Pašaliname viršutinį tarpą */
+    margin-bottom: 0.5em !important; /* Mažesnis tarpas po antrašte */
+  }
+  .article-content ol li p {
+    font-size: 1rem; /* text-base */
+    color: var(--color-gridors-primary-darker); /* text-gray-700 */
+    margin-bottom: 0.5em;
+  }
+  .article-content ol li a.btn { /* Mygtukas žingsnio viduje */
+    margin-top: 1rem; /* mt-4 */
+  }
+  
+  .article-content strong { /* DUK klausimai */
+    font-weight: 700;
+    color: var(--color-gridors-primary-darker);
+  }
+
+  /* DUK klausimų/atsakymų blokai */
+  .article-content h2 + p strong:first-child, /* Pirmas strong po h2 arba p */
+  .article-content > div > p strong:first-child {
+      display: block; /* Kad kiekvienas klausimas būtų naujoje eilutėje */
+      margin-bottom: 0.5em; /* Tarpas tarp klausimo ir atsakymo */
+  }
+
+  /* Reitingo žvaigždutės */
+  .article-content > div:has(.text-gridors-accent.text-3xl) { /* Suranda div, kuriame yra ★★★★★★ */
+    text-align: center;
+    margin-top: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  .article-content > div > .text-gridors-accent.text-3xl { /* Pačios žvaigždutės */
+    color: var(--color-accent);
+    font-size: 2rem;
+  }
+
+  /* Likęs bendras article-content stilius */
+  .article-content h1, .article-content h2, .article-content h3,
+  .article-content h4, .article-content h5, .article-content h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    margin-top: 2em;
+    margin-bottom: 0.8em;
+    color: #1f2937;
+    line-height: 1.2;
+  }
+  /* Paslėpti h1, h5, h6, jei jie dubliuojasi */
+  .article-content h1,
+  .article-content h5,
+  .article-content h6 {
+    display: none !important;
+  }
+  
+  .article-content h2 { font-size: 2.25rem; }
+  .article-content h3 { font-size: 1.875rem; }
+  .article-content h4 { font-size: 1.5rem; }
+
+  .article-content ul, .article-content ol {
+    margin-left: 1.5em;
+    margin-bottom: 1.5em;
+    padding-left: 0.5em;
+  }
+  .article-content ul li {
+    list-style-type: disc;
+    margin-bottom: 0.5em;
+  }
+  .article-content ol li {
+    list-style-type: decimal;
+    margin-bottom: 0.5em;
+  }
+
+  .article-content a {
+    color: var(--color-primary);
+    text-decoration: underline;
+    font-weight: 500;
+  }
+  .article-content a:hover { color: var(--color-accent); }
+
+  .article-content strong {
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .article-content pre {
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    background: #1e293b;
+    color: #f8fafc;
+    overflow-x: auto;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+  .article-content code {
+    font-family: var(--font-mono);
+  }
+
+  .article-content blockquote {
+    border-left: 4px solid var(--color-primary-light);
+    padding-left: 1.5em;
+    margin: 2em 0;
+    font-style: italic;
+    color: #4b5563;
+  }
+</style>

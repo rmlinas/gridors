@@ -1,0 +1,90 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import PostLayout from '../../layouts/Post.astro';
+import StarRatingInput from '../../components/StarRatingInput.jsx';
+import { formatDate } from '../../utils/formatDate';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('reviews', ({ data }) => !data.draft);
+  return entries.map(entry => ({
+    params: { slug: entry.slug },
+    props: { entry }
+  }));
+}
+
+interface Props {
+  entry: CollectionEntry<'reviews'>;
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+
+// Reading time
+const readingTime = entry.body
+  ? `${Math.ceil(entry.body.trim().split(/\s+/).length / 200)} min read`
+  : '—';
+---
+
+<PostLayout
+  entry={entry}
+  title={entry.data.title}
+  pubDate={entry.data.pubDate}
+  description={entry.data.description}
+  image={entry.data.image}
+  category={entry.data.category || 'Reviews'}
+  author={entry.data.author || 'Gridors Team'}
+>
+  {/* Product info, if present */}
+  {entry.data.product && (
+    <p class="text-gray-700 text-lg mb-2">
+      <strong>Product:</strong> {entry.data.product}
+    </p>
+  )}
+
+  {/* Star rating section */}
+  <div class="flex flex-col items-center mb-6">
+    <p class="text-gray-600 text-sm mb-1">
+      {entry.data.rating ? 'Rate this product:' : 'Be the first to rate this product!'}
+    </p>
+    <StarRatingInput
+      initialRating={entry.data.rating || 0}
+      reviewSlug={entry.slug}
+      client:load
+    />
+    {entry.data.rating && (
+      <p class="text-gray-700 font-medium mt-2">
+        Current Rating: {entry.data.rating} / 5
+      </p>
+    )}
+  </div>
+
+  {/* Display image if exists */}
+  {entry.data.image && (
+    <img
+      src={entry.data.image}
+      alt={entry.data.title || 'Review image'}
+      class="w-full rounded-lg shadow-md mb-8"
+    />
+  )}
+
+  {/* Markdown/MDX content */}
+  <div class="article-content">
+    <Content />
+  </div>
+
+  {/* Tags */}
+  {entry.data.tags && entry.data.tags.length > 0 && (
+    <div class="mt-8 border-t border-gray-200 pt-4">
+      <span class="font-semibold text-gray-700">Tags: </span>
+      {entry.data.tags.map((tag: string) => (
+        <a
+          href={`/tags/${tag.toLowerCase()}`}
+          rel="tag"
+          class="inline-block bg-gridors-primary-light text-white text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full hover:bg-gridors-primary transition-colors duration-200"
+        >
+          {tag}
+        </a>
+      ))}
+    </div>
+  )}
+</PostLayout>

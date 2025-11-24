@@ -1,0 +1,141 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import OffGridCalculator from '@/components/OffGridCalculator.jsx';
+import solarComponents from '@/data/solar_components.json'; // Šį importą paliekam
+
+// --- Frontmatter Variables ---
+const pageTitle = 'Off-Grid Power Calculator: Master Your Energy Needs';
+const pageDescription = 'Comprehensive guide on power calculator for off-grid and homesteading enthusiasts. Understanding your energy needs and accurately calculating them is essential for navigating an increasingly unpredictable world. This guide will equip you with the knowledge and practical skills to conquer your energy demands.';
+const pageImage = "/images/power-calculator-mastering-energy-needs-for-the-resilient-homesteader-2025_auto_20250619161011.webp"; // Example image from original mdx
+const author = 'Gridors Team'; // Pakeista į "Gridors Team" ar konkretų autorių
+const date = new Date().toISOString(); // Dinamiškai generuojama dabartinė data
+const showSidebar = false;
+
+// Breadcrumbs takelis (nuorodos atnaujintos pagal nustatytas gaires)
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Guides', href: '/guides/' },
+  { label: 'DIY Skills', href: '/guides/diy-skills/' },
+  { label: 'Power Calculator', href: '/guides/diy-skills/power-calculator/' }
+];
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  image={pageImage}
+  showSidebar={showSidebar}
+  contentGridClass={showSidebar ? 'lg:col-span-8' : 'lg:col-span-12'}
+>
+  <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div class="col-span-full w-full lg:col-span-12">
+
+        {/* Hero Image */}
+        {pageImage && (
+          <div class="relative w-full aspect-video md:aspect-[16/6] lg:aspect-[16/5] overflow-hidden bg-gray-100 mb-8 rounded-lg shadow-md animate-fade-in">
+            <img
+              src={pageImage}
+              alt={pageTitle}
+              width="1920"
+              height="1080"
+              loading="eager"
+              class="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
+        {/* Pagrindinis turinio blokas su balta apdaila */}
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 bg-white rounded-xl shadow-lg">
+
+          {/* Breadcrumbs */}
+          <nav aria-label="Breadcrumb" class="mb-6 text-sm text-gray-500">
+            <ol class="list-reset flex space-x-2">
+              {breadcrumbs.map((crumb, idx) => (
+                <li key={idx}>
+                  {idx < breadcrumbs.length - 1 ? (
+                    <a href={crumb.href} class="hover:underline text-gridors-primary">{crumb.label}</a>
+                  ) : (
+                    <span aria-current="page" class="font-medium text-gray-700">{crumb.label}</span>
+                  )}
+                  {idx < breadcrumbs.length - 1 && <span class="mx-2">/</span>}
+                </li>
+              ))}
+            </ol>
+          </nav>
+
+          {/* Antraštė ir metaduomenys */}
+          <header class="mb-10 text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4 font-oswald" id="article-title">
+              {pageTitle}
+            </h1>
+            <p class="text-md text-gray-600">
+              By <span class="font-semibold text-gray-800">{author}</span> on <time dateTime={date}>{new Date(date).toLocaleDateString('lt-LT', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+            </p>
+          </header>
+
+          {/* Įžanginis tekstas ir What You'll Learn */}
+          <div class="article-content prose prose-lg mx-auto" id="main-md-content">
+            <p>Modern homesteading in 2025 isn't just about idyllic landscapes; it's about resourcefulness and resilience. Understanding your energy needs, and accurately calculating them with a power calculator, is essential for navigating an increasingly unpredictable world. This guide will equip you with the knowledge and practical skills to manage your energy demands, ensuring your homestead remains powered, productive, and prepared.</p>
+
+            <h2>What You’ll Learn</h2>
+            <ul>
+              <li><strong>Demystifying Power Calculations:</strong> Learn fundamental formulas and concepts behind wattage, voltage, amperage, and energy consumption. Understand peak load and average daily usage – critical for system sizing.</li>
+              <li><strong>Step-by-Step Appliance Inventory:</strong> Create a comprehensive list of every appliance and device. A downloadable template will aid tracking.</li>
+              <li><strong>Calculating Daily Energy Needs:</strong> Accurately determine wattage and run time for each appliance to calculate daily energy consumption (watt-hours or kilowatt-hours). Several calculation methods and examples will be provided.</li>
+              <li><strong>Sizing Your Off-Grid System:</strong> Translate your energy needs into system requirements for solar panels, batteries, inverters, and generators. Understand how sunlight hours, battery depth of discharge, and inverter efficiency impact system sizing.</li>
+              <li><strong>Generator Sizing and Efficiency:</strong> Explore the pros and cons of generator usage as a backup power source. Learn how to size a generator to meet peak load demands while minimizing fuel consumption and noise pollution.</li>
+              <li><strong>Reducing Your Energy Footprint:</strong> Discover practical strategies for minimizing energy consumption, from energy-efficient appliances and LED lighting to passive heating and cooling techniques.</li>
+              <li><strong>DIY Power Audit & Troubleshooting:</strong> Learn how to conduct a basic power audit to identify energy vampires and optimize system performance. Common troubleshooting scenarios and solutions will be covered.</li>
+            </ul>
+
+            <h2>Getting Started: The Homestead Energy Audit</h2>
+            <p>Before calculations, start with a thorough energy audit. Identify all potential energy consumers and estimate their usage patterns. Consider:</p>
+            <ul>
+              <li><strong>Water Pumping:</strong> Gallons per day? Well depth and pump wattage?</li>
+              <li><strong>Lighting:</strong> Replacing incandescent bulbs with LEDs reduces energy consumption.</li>
+              <li><strong>Heating and Cooling:</strong> Efficient insulation, strategic landscaping, and alternative methods are key.</li>
+              <li><strong>Refrigeration:</strong> Modern refrigerators are more efficient. Consider a chest freezer.</li>
+              <li><strong>Cooking:</strong> Propane stoves, wood-fired ovens, and solar cookers can reduce reliance on electric ovens.</li>
+              <li><strong>Communication:</strong> Ham radio, satellite phones need power.</li>
+            </ul>
+            <p>Account for seasonal variations in energy usage.</p>
+
+            <h2>Practical Applications: Powering Your Post-Apocalyptic Dream</h2>
+            <ul>
+              <li>✅ <strong>Food Security Boost:</strong> Powering greenhouses, hydroponic systems, and food preservation equipment ensures a reliable food supply.</li>
+              <li>✅ <strong>Reduced Dependency on External Grids:</strong> Achieving energy independence through renewable sources minimizes reliance on unreliable power grids.</li>
+              <li>✅ <strong>Enhanced Resilience and Autonomy:</strong> Preparing for emergencies and long-term disruptions by having a self-sufficient power system.</li>
+              <li>✅ <strong>Off-Grid Comfort and Convenience:</strong> Maintaining a comfortable standard of living with access to lighting, refrigeration, communication, and other essential amenities.</li>
+              <li>✅ <strong>Environmental Stewardship:</strong> Minimizing your carbon footprint by using renewable energy sources and reducing overall energy consumption.</li>
+            </ul>
+
+            <h2>Tools and Resources: Equip Yourself for Success</h2>
+          </div>
+
+          {/* Štai kur pakeitimas: Naudojame client:only */}
+          <OffGridCalculator client:only solarComponents={solarComponents} />
+
+          <div class="article-content prose prose-lg mx-auto mt-8" id="post-calculator-resources">
+            <ul>
+              <li><strong>Gridors.com Power Calculator Tool:</strong> <a href="/guides/diy-skills/power-calculator/">Open Calculator Tool</a></li>
+              <li><strong>Downloadable Appliance Wattage Spreadsheet:</strong> <a href="/downloads/appliance-wattage-spreadsheet.xlsx">Download Spreadsheet</a></li>
+              <li><strong>Recommended Books and Articles:</strong> <a href="/guides/recommended-resources/">Curated Resource List</a></li>
+              <li><strong>Online Forums and Communities:</strong> Connect with other homesteaders.</li>
+              <li><strong>Energy Audit Checklist:</strong> <a href="/downloads/energy-audit-checklist.pdf">Download Checklist</a></li>
+              <li><strong>Recommended Multimeters and Clamp Meters:</strong> Essential tools for measuring voltage, current, and power consumption.</li>
+            </ul>
+
+            <h2>Summary: Empowering Your Homestead Journey</h2>
+            <p>Mastering your power needs is a cornerstone of modern homesteading and self-sufficiency. Using a power calculator effectively is about understanding your energy consumption habits, planning for resilience, and embracing a more sustainable way of life. Start small, learn as you go, and leverage the resources and community support available to you. The Gridors community is here to support you on your journey toward energy independence. The future favors the prepared, and understanding your power needs is a key step in preparing for whatever comes next. Ready to start planning your resilient homestead? Download our free appliance wattage spreadsheet today! <a href="/downloads/appliance-wattage-spreadsheet.xlsx">Download Spreadsheet</a></p>
+          </div>
+
+          {/* Poraštė */}
+          <footer class="mt-12 pt-8 border-t border-gray-200 text-gray-600 text-sm">
+            <p>&copy; {new Date().getFullYear()} Gridors. All rights reserved.</p>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>

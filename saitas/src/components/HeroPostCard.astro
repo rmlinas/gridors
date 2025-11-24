@@ -1,0 +1,36 @@
+---
+import { format } from 'date-fns';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'guides'>;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, image, tags } = post.data;
+---
+
+<article class="relative rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+  <a href={`/guides/${post.slug}`} class="block group">
+    {image && (
+      <img
+        src={image}
+        alt={title}
+        class="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+        loading="lazy"
+      />
+    )}
+    <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/80 to-transparent p-6 text-white">
+      <h2 class="text-3xl font-bold font-oswald mb-2">{title}</h2>
+      <p class="text-sm text-gray-300 mb-2">{format(new Date(pubDate), 'MMMM d, yyyy')}</p>
+      <p class="text-base font-inter line-clamp-3">{description}</p>
+      {tags && (
+        <div class="mt-3 flex flex-wrap gap-2">
+          {tags.map(tag => (
+            <span class="bg-white/20 text-white text-xs px-2 py-1 rounded">{tag}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  </a>
+</article>

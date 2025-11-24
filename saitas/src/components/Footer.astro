@@ -1,0 +1,175 @@
+---
+// src/components/Footer.astro - Atnaujinta su patobulinimais mobiliesiems
+import { Image } from 'astro:assets';
+
+import gridorsLogo from '../assets/images/logo.png';
+
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="footer-premium">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-6 border-b border-gray-800">
+
+      {/* Logo & About */}
+      {/* Pakeista: Pridėtas centravimas mobiliesiems ir grąžintas kairinis lygiavimas didesniems ekranams */}
+      <div class="mb-6 md:mb-0 text-center md:text-left">
+        <div class="flex items-center mb-4 justify-center md:justify-start">
+          <Image
+            src={gridorsLogo}
+            alt="Gridors Logo"
+            width={48}
+            height={48}
+            class="h-12 w-12 rounded-xl shadow bg-gradient-to-br from-green-700 to-green-400 p-1 mr-3 flex-shrink-0"
+            loading="eager"
+            format="webp"
+            densities={[1.5, 2]}
+          />
+          <span class="text-2xl font-bold bg-gradient-to-r from-green-400 to-green-700 bg-clip-text text-transparent tracking-tight">Gridors</span>
+        </div>
+        <h5 class="uppercase font-bold mb-3 text-white tracking-wider">About Gridors</h5>
+        <p class="text-sm text-gray-300">
+          "Gridors" stands as a beacon in a new era. We provide proven knowledge and essential tools to empower everyone towards greater self-reliance and resilience.
+        </p>
+      </div>
+
+      {/* Exploration */}
+      {/* Pakeista: Pridėtas centravimas mobiliesiems */}
+      <div class="mb-6 md:mb-0 text-center md:text-left">
+        <h5 class="uppercase font-bold mb-4 text-white tracking-wider">Exploration</h5>
+        <ul class="space-y-2 inline-block text-left"> {/* Pridėta inline-block ir text-left, kad sąrašas būtų tvarkingas */}
+          <li><a href="/about" class="footer-link"><i class="fa fa-bullseye fa-fw mr-2 text-green-400"></i>Our Mission</a></li>
+          <li><a href="/resources" class="footer-link"><i class="fa fa-book fa-fw mr-2 text-green-400"></i>Vital Resources</a></li>
+          <li><a href="/contact" class="footer-link"><i class="fa fa-envelope fa-fw mr-2 text-green-400"></i>Contact Command</a></li>
+          <li><a href="/blog" class="footer-link"><i class="fa fa-pencil-square-o fa-fw mr-2 text-green-400"></i>Log Entries</a></li>
+          <li><a href="/guides/" class="footer-link"><i class="fa fa-cogs fa-fw mr-2 text-green-400"></i>Mastery Protocols</a></li>
+          <li><a href="/reviews" class="footer-link"><i class="fa fa-star fa-fw mr-2 text-green-400"></i>Gear Evaluations</a></li>
+        </ul>
+      </div>
+
+      {/* Operations */}
+      {/* Pakeista: Pridėtas centravimas mobiliesiems */}
+      <div class="mb-6 md:mb-0 text-center md:text-left">
+        <h5 class="uppercase font-bold mb-4 text-white tracking-wider">Operations</h5>
+        <p class="text-sm text-gray-300">
+          To sustain Gridors operations, we participate in selected affiliate programs. For a full breakdown:
+          <a href="/legal-disclosure" class="footer-link">Official Disclosure</a> &
+          <a href="/privacy-policy" class="footer-link">Privacy Protocol</a>.
+        </p>
+        <p class="text-sm mt-4">
+          <span class="font-semibold text-white">Transmission Channel:</span><br/>
+          <a href="mailto:contact@gridors.com" class="footer-link">contact@gridors.com</a>
+        </p>
+      </div>
+
+      {/* Newsletter & Social */}
+      <div class="mb-6 md:mb-0 text-center md:text-left">
+        <h5 class="uppercase font-bold mb-4 text-white tracking-wider">Newsletter</h5>
+        <form action="https://assets.mailerlite.com/jsonp/1607560/forms/157717519177614419/subscribe" method="post" target="_blank" class="mb-3">
+          {/* Pakeista: Forma dabar yra lanksti ir prisitaiko prie ekrano dydžio */}
+          <div class="flex flex-col sm:flex-row">
+            <input type="email" class="newsletter-input rounded-lg sm:rounded-l-lg sm:rounded-r-none" name="fields[email]" placeholder="Your email" required />
+            <button class="newsletter-btn mt-2 sm:mt-0 rounded-lg sm:rounded-l-none sm:rounded-r-lg" type="submit">Subscribe</button>
+          </div>
+          <input type="hidden" name="ml-submit" value="1" />
+          <input type="hidden" name="anticsrf" value="true" />
+        </form>
+        <h5 class="uppercase font-bold mt-6 mb-3 text-white tracking-wider">Follow Us</h5>
+        <div class="flex items-center space-x-4 justify-center md:justify-start">
+          <a href="#" class="footer-social" aria-label="Facebook"><i class="fa fa-facebook-square"></i></a>
+          <a href="#" class="footer-social" aria-label="Twitter"><i class="fa fa-twitter-square"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center text-xs text-gray-500 mt-6 pt-6 border-t border-gray-800">
+      <p>Gridors provides data streams and evaluations only; we do not engage in direct material transactions.</p>
+      <p class="mt-1">&copy; {currentYear} Gridors. All system rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<style is:global>
+/* Stiliai lieka nepakitę */
+/* Premium Footer */
+.footer-premium {
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+  color: #e5e7eb;
+  border-radius: 1.5rem 1.5rem 0 0;
+  box-shadow: 0 -4px 24px 0 rgba(0,0,0,0.18);
+  margin-top: 4rem;
+  overflow: hidden;
+  position: relative;
+  z-index: 10;
+}
+/* Linkų stiliai */
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  color: #d1fae5;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s, background-color 0.2s, transform 0.2s;
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  margin-right: -0.5rem;
+}
+.footer-link:hover {
+  color: #60a5fa;
+  background: rgba(16,185,129,0.08);
+  transform: translateX(3px);
+}
+/* Newsletter Input */
+.newsletter-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: #222c37;
+  color: #e0e7ef;
+  border: 1px solid #374151;
+  /* border-radius jau valdomas per HTML klases */
+  outline: none;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.newsletter-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(16,185,129,0.2);
+}
+/* Newsletter Button */
+.newsletter-btn {
+  background: linear-gradient(90deg, var(--color-accent) 0%, #22d3ee 100%);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  /* border-radius jau valdomas per HTML klases */
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px 0 rgba(16,185,129,0.06);
+}
+.newsletter-btn:hover {
+  background: linear-gradient(90deg, #22d3ee 0%, var(--color-accent) 100%);
+  box-shadow: 0 4px 16px 0 rgba(16,185,129,0.13);
+}
+/* Social Icons */
+.footer-social {
+  color: #d1fae5;
+  font-size: 2rem;
+  transition: color 0.2s, transform 0.2s, background-color 0.2s;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.footer-social:hover {
+  color: #60a5fa;
+  background: rgba(16,185,129,0.08);
+  transform: translateY(-2px) scale(1.08);
+}
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+</style>

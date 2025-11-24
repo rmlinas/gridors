@@ -1,0 +1,63 @@
+---
+// src/components/Navigation.astro
+import MobileMenu from './MobileMenu.jsx';
+import DesktopDropdown from './DesktopDropdown.jsx';
+import { getGuidesSubcategories } from '@/utils/getGuidesSubcategories';
+
+const guidesSubLinks = await getGuidesSubcategories();
+
+const navLinks = [
+  { text: 'Home', href: '/' },
+  {
+    text: 'Start Here',
+    href: '/start-here',
+    subLinks: [
+      { text: 'Quick Start', href: '/start-here/quick-start/' },
+      { text: 'Why Homesteading?', href: '/start-here/why-homesteading/' },
+    ],
+  },
+  { text: 'Blog', href: '/blog' },
+  {
+    text: 'Guides',
+    href: '/guides/',
+    subLinks: guidesSubLinks,
+  },
+  { text: 'Reviews', href: '/reviews/' },
+  {
+    text: 'Resources',
+    href: '/resources/',
+    subLinks: [
+      { text: 'Tools & Gear', href: '/resources/tools-gear/' },
+      { text: 'Books & Guides', href: '/resources/books-guides/' },
+      { text: 'Workshops & Courses', href: '/resources/workshops-courses/' },
+    ],
+  },
+  { text: 'About', href: '/about/' },
+  { text: 'Get in Touch', href: '/contact/', isButton: true },
+];
+---
+
+<nav class="w-full">
+  <!-- Desktop Navigation -->
+  <div class="hidden lg:flex justify-center items-center gap-x-8 text-sm font-medium">
+    {navLinks.map((item) =>
+      item.subLinks ? (
+        <DesktopDropdown
+          title={item.text}
+          links={item.subLinks}
+          href={item.href}       
+          client:idle
+        />
+      ) : item.isButton ? (
+        <a href={item.href} class="btn">{item.text}</a>
+      ) : (
+        <a href={item.href} class="nav-link">{item.text}</a>
+      )
+    )}
+  </div>
+
+  <!-- Mobile Navigation -->
+  <div class="lg:hidden flex justify-end">
+    <MobileMenu navLinks={navLinks} client:media="(max-width: 1023px)" />
+  </div>
+</nav>

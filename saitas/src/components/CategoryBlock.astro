@@ -1,0 +1,27 @@
+---
+interface Props {
+  title: string;
+  href: string;
+  count: number; // Pridėtas count propas
+}
+
+const { title, href, count } = Astro.props;
+---
+
+<a href={href} class="block bg-white border border-gray-200 p-6 rounded-xl hover:shadow-lg transition-all text-center group h-full flex flex-col justify-center items-center">
+  <div class="mb-4 text-gridors-primary group-hover:text-gridors-primary-light transition-colors">
+    {/* Čia galite įdėti ikoną, pvz., <i class="fas fa-seedling text-4xl"></i> */}
+    {/* Arba atvaizduoti pagal kategoriją, pvz.: */}
+    {title === 'Garden Guides' && <i class="fas fa-leaf text-4xl"></i>}
+    {title === 'Animals Guides' && <i class="fas fa-paw text-4xl"></i>}
+    {title === 'DIY Skills' && <i class="fas fa-hammer text-4xl"></i>}
+    {title === 'Kitchen' && <i class="fas fa-utensils text-4xl"></i>}
+    {title === 'Natural Recipes' && <i class="fas fa-apple-alt text-4xl"></i>}
+    {title === 'Off Grid Living' && <i class="fas fa-solar-panel text-4xl"></i>}
+    {title === 'Uncategorized' && <i class="fas fa-ellipsis-h text-4xl"></i>}
+  </div>
+  <h3 class="text-xl font-semibold text-gray-900 font-oswald mb-2">{title}</h3> 
+  {count > 0 && (
+    <p class="text-sm text-gray-600">{count} Guides</p> 
+  )}
+</a>

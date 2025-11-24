@@ -1,0 +1,166 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Layout from '@/layouts/Layout.astro';
+import PostLayout from '@/layouts/Post.astro';
+import BlogCard from '@/components/BlogCard.astro';
+import { formatDate } from '@/utils/formatDate';
+
+function getReadingTime(content: string): string {
+  const wordsPerMinute = 200;
+  const words = (content || '').trim().split(/\s+/).length;
+  const minutes = Math.ceil(words / wordsPerMinute);
+  return `${minutes} min read`;
+}
+
+function capitalizeWords(str: string): string {
+  return str
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+export async function getStaticPaths() {
+  const allGuides = await getCollection('guides', ({ data }) => !data.draft);
+  return allGuides.map(guide => ({
+    params: { slug: guide.slug },
+    props: { entry: guide }
+  }));
+}
+
+interface Props {
+  entry: CollectionEntry<'guides'>;
+  contentGridClass?: string;
+}
+
+const {
+  entry,
+  contentGridClass = 'lg:col-span-8'
+} = Astro.props;
+
+const isCategoryIndexPage = entry.id.endsWith('/index.md') || entry.slug === 'guides';
+
+let categoryTitle: string | undefined;
+let categoryGuides: CollectionEntry<'guides'>[] = [];
+let paginatedCategoryGuides: CollectionEntry<'guides'>[] = [];
+let totalCategoryPages = 0;
+let page = 1;
+let CategoryIndexPageContentHtml: any;
+let Content: any;
+
+if (isCategoryIndexPage) {
+  categoryTitle = entry.data.title || capitalizeWords(entry.slug.split('/').pop() || '');
+  if (entry.slug === 'guides') categoryTitle = 'All Guides';
+
+  if (entry.body) {
+    const rendered = await entry.render();
+    CategoryIndexPageContentHtml = rendered.Content;
+  }
+
+  const currentCategorySlugPrefix = entry.slug === 'guides' ? '' : `${entry.slug}/`;
+
+  categoryGuides = await getCollection('guides', item => {
+    if (item.data.draft) return false;
+    if (item.id.endsWith('/index.md')) return false;
+    return entry.slug === 'guides' || item.slug.startsWith(currentCategorySlugPrefix);
+  });
+
+  categoryGuides.sort((a, b) => {
+    const dateA = new Date(a.data.pubDate ?? 0).getTime();
+    const dateB = new Date(b.data.pubDate ?? 0).getTime();
+    return dateB - dateA;
+  });
+
+  const PAGE_SIZE = 9;
+  page = Number(Astro.url.searchParams.get('page') || 1);
+  totalCategoryPages = Math.ceil(categoryGuides.length / PAGE_SIZE);
+  paginatedCategoryGuides = categoryGuides.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+} else {
+  const rendered = await entry.render();
+  Content = rendered.Content;
+}
+
+const pageTitle = isCategoryIndexPage
+  ? `${categoryTitle || 'Category'} Guides`
+  : entry.data.title;
+
+const pageDescription = isCategoryIndexPage
+  ? (entry.data.description || `Explore ${categoryTitle?.toLowerCase() || 'various'} guides for practical skills and in-depth knowledge.`)
+  : (entry.data.description || 'Discover useful guides for self-reliance.');
+
+const pageImage = typeof entry.data.image === 'string' ? entry.data.image : (entry.data.image?.src || '/default-guide-hero.jpg');
+
+const basePath = entry.slug === 'guides' ? '/guides' : `/guides/${entry.slug}`;
+---
+
+{isCategoryIndexPage ? (
+  <Layout
+    title={pageTitle}
+    description={pageDescription}
+    image={pageImage}
+    showSidebar={true}
+    contentGridClass={contentGridClass}
+  >
+    <main>
+      <article>
+        <header>
+          <h1>{categoryTitle}</h1>
+        </header>
+
+        {CategoryIndexPageContentHtml && (
+          <div class="prose prose-lg max-w-none mb-6">
+            <CategoryIndexPageContentHtml />
+          </div>
+        )}
+
+        {paginatedCategoryGuides.length > 0 ? (
+          <section class="grid gap-6">
+            {paginatedCategoryGuides.map(guide => (
+              <BlogCard post={guide} key={guide.slug} />
+            ))}
+          </section>
+        ) : (
+          <p>No guides found in this category yet. The library is growing, check back soon!</p>
+        )}
+
+        {totalCategoryPages > 1 && (
+          <nav aria-label="Pagination" class="mt-10 flex flex-wrap gap-2">
+            {page > 1 && (
+              <a href={`${basePath}/?page=${page - 1}`} rel="prev" class="btn">
+                ← Previous
+              </a>
+            )}
+
+            {Array.from({ length: totalCategoryPages }, (_, i) => i + 1).map(pageNum => (
+              <a
+                key={pageNum}
+                href={`${basePath}/?page=${pageNum}`}
+                aria-current={pageNum === page ? 'page' : undefined}
+                class={`btn ${pageNum === page ? 'font-bold underline' : ''}`}
+              >
+                {pageNum}
+              </a>
+            ))}
+
+            {page < totalCategoryPages && (
+              <a href={`${basePath}/?page=${page + 1}`} rel="next" class="btn">
+                Next →
+              </a>
+            )}
+          </nav>
+        )}
+      </article>
+    </main>
+  </Layout>
+) : (
+  <PostLayout
+    entry={entry}
+    title={entry.data.title}
+    pubDate={entry.data.pubDate}
+    description={entry.data.description}
+    image={entry.data.image}
+    category={entry.data.category}
+    author={entry.data.author}
+  >
+    <Content />
+  </PostLayout>
+)}

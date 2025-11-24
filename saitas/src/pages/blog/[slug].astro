@@ -1,0 +1,113 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import { format } from 'date-fns';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  const filteredPosts = posts.filter(post => post.slug !== 'blog-md');
+  return filteredPosts.map(post => ({
+    params: { slug: post.slug },
+    props: { post }
+  }));
+}
+
+interface Props {
+  post: {
+    slug: string;
+    data: {
+      title: string;
+      description?: string;
+      pubDate?: string;
+      image?: string;
+      category?: string;
+      author?: string;
+    };
+    body: string;
+  };
+}
+
+function getReadingTime(content: string): string {
+  const wordsPerMinute = 200;
+  const words = content.trim().split(/\s+/).length;
+  const minutes = Math.ceil(words / wordsPerMinute);
+  return `${minutes} min read`;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, image, category, author } = post.data;
+
+const pageTitle = title || 'Untitled Article';
+const pageDescription = description || 'A comprehensive look into the topic.';
+const publishedDate = pubDate ? format(new Date(pubDate), 'MMMM d,PPPP') : 'Date not available';
+const heroImage = image || '/default-post-hero.jpg';
+const postCategory = category || 'Uncategorized';
+const postAuthor = author || 'Gridors Team';
+const readingTime = getReadingTime(post.body);
+
+const { Content } = await post.render();
+
+// NAUJAS: Nustatome contentGridClass. Individualiam straipsniui visada bus 9/3 išdėstymas
+const articleContentGridClass = "lg:col-span-8"; // Grąžiname 8 stulpelius pagrindiniam turiniui
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  image={heroImage}
+  showSidebar={true}
+  contentGridClass={articleContentGridClass} {/* NAUJAS: Perduodame contentGridClass */}
+>
+  {/* Pagrindinis paveikslėlis (Hero Image) */}
+  {heroImage && (
+    <div class="relative w-full aspect-video md:aspect-[16/6] lg:aspect-[16/5] overflow-hidden bg-gray-100 mb-8 rounded-lg shadow-md animate-fade-in">
+      <img
+        src={heroImage}
+        alt={pageTitle}
+        width="1920"
+        height="1080"
+        loading="eager"
+        class="w-full h-full object-cover"
+      />
+      {postCategory && (
+        <span class="absolute bottom-4 left-4 bg-gridors-primary text-white text-xs px-3 py-1.5 rounded-full uppercase font-bold tracking-wider">
+          {postCategory}
+        </span>
+      )}
+    </div>
+  )}
+
+  {/* Straipsnio turinio konteineris su balta apdaila */}
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 bg-white rounded-xl shadow-lg animate-fade-in">
+    {/* Antraštė ir metaduomenys */}
+    <header class="mb-10 text-center">
+      <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4 font-oswald">
+        {pageTitle}
+      </h1>
+      <p class="text-md text-gray-600">
+        By <span class="font-semibold text-gray-800">{postAuthor}</span> on <time dateTime={pubDate}>{publishedDate}</time>
+        {readingTime && ` · ${readingTime}`}
+      </p>
+    </header>
+
+    {/* Straipsnio turinys iš Markdown failo - naudojame Content komponentą */}
+    <div class="article-content">
+      <Content />
+    </div>
+
+    {/* Poraštė su papildoma informacija (pasirenkama) */}
+    <footer class="mt-12 pt-8 border-t border-gray-200 text-gray-600 text-sm flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <span>Kategorija:</span>
+        <a href={`/guides/${postCategory.toLowerCase().replace(/\s/g, '-')}/`} class="text-gridors-primary hover:underline font-medium">
+          {postCategory}
+        </a>
+      </div>
+      <div>
+        <span>Paskelbta: {publishedDate}</span>
+      </div>
+    </footer>
+  </div>
+</Layout>
+
+{/* PAŠALINTAS: Stilių blokas, nes .article-content stiliai yra global.css */}
